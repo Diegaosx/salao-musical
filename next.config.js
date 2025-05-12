@@ -13,7 +13,10 @@ const nextConfig = {
     unoptimized: true,
   },
   // Configurações específicas para a Vercel
-  output: "standalone",
+  experimental: {
+    // Desabilitar recursos experimentais que podem causar problemas
+    serverComponentsExternalPackages: [],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
