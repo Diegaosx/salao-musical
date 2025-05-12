@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Salão Musical de Lisboa",
+    name: process.env.NEXT_PUBLIC_APP_NAME || "Salão Musical de Lisboa",
     short_name: "Salão Musical",
-    description: "Loja de instrumentos musicais desde 1958",
+    description: process.env.NEXT_PUBLIC_APP_DESCRIPTION || "Loja de instrumentos musicais desde 1958",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -4,6 +4,8 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Calendar, Send } from "lucide-react"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -100,11 +102,34 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-[#002060]">Painel de Notificações</h1>
+            <h1 className="text-2xl font-bold text-[#002060]">Painel de Administração</h1>
             <button onClick={() => router.push("/")} className="text-[#002060] hover:underline text-sm">
               Voltar para o site
             </button>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Link
+              href="/admin/notificacoes"
+              className="flex flex-col items-center justify-center p-6 border rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Calendar className="h-12 w-12 text-[#002060] mb-4" />
+              <h2 className="text-lg font-semibold text-[#002060]">Notificações Agendadas</h2>
+              <p className="text-sm text-gray-600 text-center mt-2">
+                Agende notificações para serem enviadas automaticamente em datas específicas
+              </p>
+            </Link>
+
+            <div className="flex flex-col items-center justify-center p-6 border rounded-lg">
+              <Send className="h-12 w-12 text-[#002060] mb-4" />
+              <h2 className="text-lg font-semibold text-[#002060]">Enviar Notificação Imediata</h2>
+              <p className="text-sm text-gray-600 text-center mt-2">
+                Envie uma notificação push para todos os usuários inscritos
+              </p>
+            </div>
+          </div>
+
+          <h2 className="text-xl font-semibold mb-4 text-[#002060]">Enviar Notificação Imediata</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

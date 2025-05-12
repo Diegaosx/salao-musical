@@ -5,13 +5,24 @@ import webpush from "web-push"
 // para armazenar as inscrições
 let subscriptions: PushSubscription[] = []
 
-// Configurar as chaves VAPID (em produção, devem ser armazenadas como variáveis de ambiente)
+// Configurar as chaves VAPID a partir das variáveis de ambiente
 const vapidKeys = {
-  publicKey: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U",
-  privateKey: "Xt4Z-sxMTJVvLxkcK-mZYUARxcVde0vZaXWyGPQEgqo",
+  publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "",
+  privateKey: process.env.VAPID_PRIVATE_KEY || "",
 }
 
-webpush.setVapidDetails("mailto:exemplo@salaomusical.com", vapidKeys.publicKey, vapidKeys.privateKey)
+// Verificar se as chaves VAPID estão definidas
+if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
+  console.error("Chaves VAPID não configuradas corretamente")
+}
+
+// Configurar o webpush com as chaves VAPID
+const domain = process.env.NEXT_PUBLIC_DOMAIN || "https://salao.avisatudo.com"
+webpush.setVapidDetails(
+  `mailto:contato@${domain.replace(/^https?:\/\//, "")}`,
+  vapidKeys.publicKey,
+  vapidKeys.privateKey,
+)
 
 export async function POST(request: Request) {
   try {
@@ -39,7 +50,7 @@ export async function POST(request: Request) {
       try {
         await webpush.sendNotification(subscription, JSON.stringify(notification))
         return { success: true, endpoint: subscription.endpoint }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao enviar notificação:", error)
 
         // Se a inscrição não for mais válida, removê-la
@@ -63,7 +74,7 @@ export async function POST(request: Request) {
       failed: results.filter((r) => !r.success).length,
       results,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao processar envio de notificação:", error)
     return NextResponse.json({ error: "Falha ao processar envio de notificação" }, { status: 500 })
   }

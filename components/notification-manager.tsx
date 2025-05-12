@@ -57,8 +57,13 @@ export default function NotificationManager() {
         return
       }
 
-      // Chave pública VAPID (em produção, deve ser gerada e armazenada de forma segura)
-      const vapidPublicKey = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U"
+      // Usar a chave pública VAPID do ambiente
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidPublicKey) {
+        console.error("Chave pública VAPID não encontrada")
+        return
+      }
+
       const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey)
 
       // Inscrever o usuário

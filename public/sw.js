@@ -12,7 +12,7 @@ self.addEventListener("push", (event) => {
     const options = {
       body: data.body,
       icon: data.icon || "/icons/icon-192x192.png",
-      badge: "/icons/badge-72x72.png",
+      badge: data.badge || "/icons/badge-72x72.png",
       vibrate: [100, 50, 100],
       data: {
         url: data.url || "/",
@@ -32,7 +32,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Cache assets for offline use
 const CACHE_NAME = "salao-musical-v1"
-const urlsToCache = ["/", "/offline", "/icons/icon-192x192.png", "/icons/icon-512x512.png"]
+const urlsToCache = ["/", "/offline", "/icons/icon-192x192.png", "/icons/icon-512x512.png", "/icons/badge-72x72.png"]
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
