@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Calendar, Send } from "lucide-react"
+import { Calendar, Send, AlertTriangle } from "lucide-react"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -17,6 +17,7 @@ export default function AdminPage() {
   const [error, setError] = useState("")
   const [password, setPassword] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [noSubscriptions, setNoSubscriptions] = useState(false)
 
   const handleAuthentication = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +35,7 @@ export default function AdminPage() {
     setIsLoading(true)
     setError("")
     setResult(null)
+    setNoSubscriptions(false)
 
     try {
       const response = await fetch("/api/notifications/send", {
@@ -51,13 +53,17 @@ export default function AdminPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao enviar notificação")
+        if (response.status === 404 && data.error === "Nenhuma inscrição encontrada") {
+          setNoSubscriptions(true)
+        } else {
+          throw new Error(data.error || "Erro ao enviar notificação")
+        }
+      } else {
+        setResult(data)
+        setTitle("")
+        setBody("")
+        setUrl("")
       }
-
-      setResult(data)
-      setTitle("")
-      setBody("")
-      setUrl("")
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro ao enviar a notificação")
     } finally {
@@ -130,6 +136,29 @@ export default function AdminPage() {
           </div>
 
           <h2 className="text-xl font-semibold mb-4 text-[#002060]">Enviar Notificação Imediata</h2>
+
+          {noSubscriptions && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+              <div className="flex items-start">
+                <AlertTriangle className="h-5 w-5 text-yellow-400 mr-3 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-yellow-800">Nenhuma inscrição encontrada</h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>Ainda não há usuários inscritos para receber notificações. Para testar:</p>
+                    <ol className="list-decimal ml-5 mt-2 space-y-1">
+                      <li>Acesse o site em um dispositivo Android</li>
+                      <li>Instale o PWA clicando no botão "Instalar App"</li>
+                      <li>Ative as notificações clicando no ícone de sino</li>
+                      <li>Volte a esta página para enviar uma notificação de teste</li>
+                    </ol>
+                    <p className="mt-2">
+                      <strong>Nota:</strong> O iOS (iPhone/iPad) não suporta notificações push para PWAs.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

@@ -1,14 +1,29 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, BellOff } from "lucide-react"
+import { Bell, BellOff, Info } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export default function NotificationButton() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
   const [isSupported, setIsSupported] = useState(true)
+  const [isIOS, setIsIOS] = useState(false)
+  const [showIOSHelp, setShowIOSHelp] = useState(false)
 
   useEffect(() => {
+    // Detectar se é iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    setIsIOS(isIOSDevice)
+
     // Verificar se o navegador suporta service workers e notificações
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setIsSupported(false)
@@ -35,6 +50,11 @@ export default function NotificationButton() {
   }, [])
 
   const toggleNotifications = async () => {
+    if (isIOS) {
+      setShowIOSHelp(true)
+      return
+    }
+
     if (isSubscribed) {
       await unsubscribeUser()
     } else {
@@ -146,17 +166,43 @@ export default function NotificationButton() {
     return outputArray
   }
 
-  if (!isSupported) {
+  if (!isSupported && !isIOS) {
     return null
   }
 
   return (
-    <button
-      onClick={toggleNotifications}
-      className="fixed bottom-4 right-4 bg-[#002060] text-white p-3 rounded-full shadow-lg z-50 flex items-center justify-center"
-      aria-label={isSubscribed ? "Desativar notificações" : "Ativar notificações"}
-    >
-      {isSubscribed ? <BellOff size={24} /> : <Bell size={24} />}
-    </button>
+    <>
+      <button
+        onClick={toggleNotifications}
+        className="fixed bottom-4 right-4 bg-[#002060] text-white p-3 rounded-full shadow-lg z-50 flex items-center justify-center"
+        aria-label={
+          isIOS ? "Informações sobre notificações" : isSubscribed ? "Desativar notificações" : "Ativar notificações"
+        }
+      >
+        {isIOS ? <Info size={24} /> : isSubscribed ? <BellOff size={24} /> : <Bell size={24} />}
+      </button>
+
+      <Dialog open={showIOSHelp} onOpenChange={setShowIOSHelp}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notificações no iOS</DialogTitle>
+            <DialogDescription>
+              Infelizmente, o iOS não suporta notificações push para aplicativos web (PWA) no momento.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">Para receber notificações no iOS, você pode:</p>
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>Adicionar o app à tela inicial para melhor experiência</li>
+              <li>Verificar regularmente o app para novidades</li>
+              <li>Usar um dispositivo Android para receber notificações push</li>
+            </ol>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowIOSHelp(false)}>Entendi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

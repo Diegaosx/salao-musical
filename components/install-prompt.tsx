@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, X } from "lucide-react"
+import Link from "next/link"
+import { Download, X, HelpCircle } from "lucide-react"
 
 export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
@@ -29,6 +30,13 @@ export default function InstallPrompt() {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches
     if (isStandalone) {
       setShowPrompt(false)
+    } else {
+      // Se não estiver instalado, mostrar o prompt após 3 segundos
+      const timer = setTimeout(() => {
+        setShowPrompt(true)
+      }, 3000)
+
+      return () => clearTimeout(timer)
     }
 
     return () => {
@@ -37,7 +45,11 @@ export default function InstallPrompt() {
   }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
+    if (!deferredPrompt) {
+      // Se não temos o prompt nativo, redirecionar para a página de instruções
+      window.location.href = "/instalar"
+      return
+    }
 
     // Mostrar o prompt de instalação
     deferredPrompt.prompt()
@@ -62,10 +74,10 @@ export default function InstallPrompt() {
         <h3 className="font-bold text-[#002060]">Instale o App do Salão Musical</h3>
         <p className="text-sm text-gray-600 mb-3">
           {isIOS
-            ? 'Toque em "Compartilhar" e depois "Adicionar à Tela de Início"'
+            ? "Adicione à tela inicial para uma experiência completa"
             : "Instale nosso app para uma experiência melhor"}
         </p>
-        {!isIOS && (
+        <div className="flex space-x-2">
           <button
             onClick={handleInstallClick}
             className="bg-[#002060] text-white px-4 py-2 rounded-md flex items-center"
@@ -73,7 +85,15 @@ export default function InstallPrompt() {
             <Download size={16} className="mr-2" />
             Instalar App
           </button>
-        )}
+
+          <Link
+            href="/instalar"
+            className="text-[#002060] border border-[#002060] px-4 py-2 rounded-md flex items-center"
+          >
+            <HelpCircle size={16} className="mr-2" />
+            Ver instruções
+          </Link>
+        </div>
       </div>
     </div>
   )
