@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Calendar, Send, AlertTriangle } from "lucide-react"
@@ -18,6 +18,16 @@ export default function AdminPage() {
   const [password, setPassword] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [noSubscriptions, setNoSubscriptions] = useState(false)
+  const [isPreviewEnvironment, setIsPreviewEnvironment] = useState(false)
+
+  useEffect(() => {
+    // Verificar se estamos em ambiente de preview
+    const isPreview =
+      typeof window !== "undefined" &&
+      (window.location.hostname.includes("vusercontent.net") || window.location.hostname.includes("localhost"))
+
+    setIsPreviewEnvironment(isPreview)
+  }, [])
 
   const handleAuthentication = (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +46,19 @@ export default function AdminPage() {
     setError("")
     setResult(null)
     setNoSubscriptions(false)
+
+    // No ambiente de preview, simular o envio
+    if (isPreviewEnvironment) {
+      setTimeout(() => {
+        setResult({
+          sent: 0,
+          failed: 0,
+          message: "Simulação de envio no ambiente de preview",
+        })
+        setIsLoading(false)
+      }, 1000)
+      return
+    }
 
     try {
       const response = await fetch("/api/notifications/send", {
@@ -114,6 +137,24 @@ export default function AdminPage() {
             </button>
           </div>
 
+          {isPreviewEnvironment && (
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+              <div className="flex items-start">
+                <AlertTriangle className="h-5 w-5 text-blue-400 mr-3 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium text-blue-800">Ambiente de Preview</h3>
+                  <div className="mt-2 text-sm text-blue-700">
+                    <p>
+                      Você está no ambiente de preview do v0. Algumas funcionalidades, como notificações push e service
+                      workers, não funcionam neste ambiente.
+                    </p>
+                    <p className="mt-2">Para testar completamente o PWA, faça o deploy em um ambiente de produção.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Link
               href="/admin/notificacoes"
@@ -137,7 +178,7 @@ export default function AdminPage() {
 
           <h2 className="text-xl font-semibold mb-4 text-[#002060]">Enviar Notificação Imediata</h2>
 
-          {noSubscriptions && (
+          {noSubscriptions && !isPreviewEnvironment && (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
               <div className="flex items-start">
                 <AlertTriangle className="h-5 w-5 text-yellow-400 mr-3 mt-0.5" />
@@ -213,7 +254,7 @@ export default function AdminPage() {
               disabled={isLoading}
               className="bg-[#002060] text-white py-2 px-4 rounded-md hover:bg-blue-900 transition-colors disabled:opacity-50"
             >
-              {isLoading ? "Enviando..." : "Enviar Notificação"}
+              {isLoading ? "Enviando..." : isPreviewEnvironment ? "Simular Envio" : "Enviar Notificação"}
             </button>
           </form>
         </div>
@@ -222,23 +263,32 @@ export default function AdminPage() {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-lg font-semibold mb-4 text-[#002060]">Resultado do Envio</h2>
             <div className="bg-gray-50 p-4 rounded-md">
-              <p className="mb-2">
-                <span className="font-medium">Enviadas com sucesso:</span> {result.sent}
-              </p>
-              <p className="mb-2">
-                <span className="font-medium">Falhas no envio:</span> {result.failed}
-              </p>
-              {result.results && result.results.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold mb-2">Detalhes:</h3>
-                  <ul className="text-xs space-y-1">
-                    {result.results.map((r: any, i: number) => (
-                      <li key={i} className={r.success ? "text-green-600" : "text-red-600"}>
-                        {r.success ? "✓" : "✗"} {r.endpoint.substring(0, 30)}... {r.error && `(${r.error})`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {isPreviewEnvironment ? (
+                <p className="text-blue-600">
+                  Simulação de envio concluída. Em um ambiente de produção, as notificações seriam enviadas para os
+                  usuários inscritos.
+                </p>
+              ) : (
+                <>
+                  <p className="mb-2">
+                    <span className="font-medium">Enviadas com sucesso:</span> {result.sent}
+                  </p>
+                  <p className="mb-2">
+                    <span className="font-medium">Falhas no envio:</span> {result.failed}
+                  </p>
+                  {result.results && result.results.length > 0 && (
+                    <div className="mt-4">
+                      <h3 className="text-sm font-semibold mb-2">Detalhes:</h3>
+                      <ul className="text-xs space-y-1">
+                        {result.results.map((r: any, i: number) => (
+                          <li key={i} className={r.success ? "text-green-600" : "text-red-600"}>
+                            {r.success ? "✓" : "✗"} {r.endpoint.substring(0, 30)}... {r.error && `(${r.error})`}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

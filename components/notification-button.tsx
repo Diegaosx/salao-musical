@@ -18,15 +18,29 @@ export default function NotificationButton() {
   const [isSupported, setIsSupported] = useState(true)
   const [isIOS, setIsIOS] = useState(false)
   const [showIOSHelp, setShowIOSHelp] = useState(false)
+  const [isPreviewEnvironment, setIsPreviewEnvironment] = useState(false)
+  const [showPreviewHelp, setShowPreviewHelp] = useState(false)
 
   useEffect(() => {
     // Detectar se é iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
     setIsIOS(isIOSDevice)
 
+    // Verificar se estamos em ambiente de preview
+    const isPreview =
+      typeof window !== "undefined" &&
+      (window.location.hostname.includes("vusercontent.net") || window.location.hostname.includes("localhost"))
+
+    setIsPreviewEnvironment(isPreview)
+
     // Verificar se o navegador suporta service workers e notificações
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setIsSupported(false)
+      return
+    }
+
+    // Não tentar registrar o service worker em ambiente de preview
+    if (isPreview) {
       return
     }
 
@@ -50,6 +64,11 @@ export default function NotificationButton() {
   }, [])
 
   const toggleNotifications = async () => {
+    if (isPreviewEnvironment) {
+      setShowPreviewHelp(true)
+      return
+    }
+
     if (isIOS) {
       setShowIOSHelp(true)
       return
@@ -166,7 +185,7 @@ export default function NotificationButton() {
     return outputArray
   }
 
-  if (!isSupported && !isIOS) {
+  if (!isSupported && !isIOS && !isPreviewEnvironment) {
     return null
   }
 
@@ -176,10 +195,24 @@ export default function NotificationButton() {
         onClick={toggleNotifications}
         className="fixed bottom-4 right-4 bg-[#002060] text-white p-3 rounded-full shadow-lg z-50 flex items-center justify-center"
         aria-label={
-          isIOS ? "Informações sobre notificações" : isSubscribed ? "Desativar notificações" : "Ativar notificações"
+          isPreviewEnvironment
+            ? "Informações sobre o ambiente de preview"
+            : isIOS
+              ? "Informações sobre notificações"
+              : isSubscribed
+                ? "Desativar notificações"
+                : "Ativar notificações"
         }
       >
-        {isIOS ? <Info size={24} /> : isSubscribed ? <BellOff size={24} /> : <Bell size={24} />}
+        {isPreviewEnvironment ? (
+          <Info size={24} />
+        ) : isIOS ? (
+          <Info size={24} />
+        ) : isSubscribed ? (
+          <BellOff size={24} />
+        ) : (
+          <Bell size={24} />
+        )}
       </button>
 
       <Dialog open={showIOSHelp} onOpenChange={setShowIOSHelp}>
@@ -200,6 +233,26 @@ export default function NotificationButton() {
           </div>
           <DialogFooter>
             <Button onClick={() => setShowIOSHelp(false)}>Entendi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPreviewHelp} onOpenChange={setShowPreviewHelp}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ambiente de Preview</DialogTitle>
+            <DialogDescription>As notificações push não estão disponíveis no ambiente de preview.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">Para testar as notificações push:</p>
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>Faça o deploy do aplicativo em um ambiente de produção</li>
+              <li>Acesse o site através do domínio de produção</li>
+              <li>Ative as notificações usando o botão de sino</li>
+            </ol>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowPreviewHelp(false)}>Entendi</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
