@@ -16,14 +16,17 @@ export async function GET(request: Request) {
     }
 
     // Verificar a autenticação
-    // Vercel Cron Jobs incluem automaticamente este cabeçalho com o valor da variável CRON_SECRET
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    // Aceitar tanto o cabeçalho Authorization quanto um parâmetro de consulta para compatibilidade com Cron-job.org
+    const url = new URL(request.url)
+    const querySecret = url.searchParams.get("secret")
+
+    if (authHeader !== `Bearer ${cronSecret}` && querySecret !== cronSecret) {
       console.error("Tentativa de acesso não autorizado ao cron job")
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
     // Chamar a API de processamento de notificações
-    const baseUrl = process.env.NEXT_PUBLIC_DOMAIN || request.url.split("/api/")[0]
+    const baseUrl = process.env.NEXT_PUBLIC_DOMAIN || url.origin
     const processUrl = new URL("/api/notifications/process-scheduled", baseUrl)
 
     console.log(`Processando notificações agendadas: ${new Date().toISOString()}`)
