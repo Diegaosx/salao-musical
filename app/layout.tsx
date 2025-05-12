@@ -5,6 +5,7 @@ import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import InstallPrompt from "@/components/install-prompt"
+import IOSInstallBanner from "@/components/ios-install-banner"
 import Script from "next/script"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="pt">
       <head />
       <body className={inter.className}>
+        <IOSInstallBanner />
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
